@@ -227,12 +227,46 @@ select {
 
 .dashboard-card td:nth-child(3) {
 	font-weight: 600;
-	color: #bfdbfe;
 }
 
 .dashboard-card td:nth-child(4) {
 	white-space: nowrap;
 	color: #cbd5e1;
+}
+
+.status-badge {
+	display: inline-flex;
+	align-items: center;
+	padding: 6px 12px;
+	border-radius: 999px;
+	font-size: 0.8125rem;
+	font-weight: 700;
+	letter-spacing: 0.01em;
+	border: 1px solid transparent;
+}
+
+.status-applied {
+	color: #93c5fd;
+	background: rgba(37, 99, 235, 0.2);
+	border-color: rgba(96, 165, 250, 0.35);
+}
+
+.status-rejected {
+	color: #fca5a5;
+	background: rgba(220, 38, 38, 0.2);
+	border-color: rgba(248, 113, 113, 0.35);
+}
+
+.status-offer {
+	color: #86efac;
+	background: rgba(22, 163, 74, 0.2);
+	border-color: rgba(74, 222, 128, 0.35);
+}
+
+.status-default {
+	color: #fde68a;
+	background: rgba(202, 138, 4, 0.2);
+	border-color: rgba(250, 204, 21, 0.35);
 }
 
 .dashboard-card p {
@@ -246,6 +280,167 @@ select {
 	padding: 20px 0 4px;
 	color: #94a3b8;
 	font-weight: 500;
+}
+
+.modal-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 1000;
+	display: grid;
+	place-items: center;
+	padding: 20px;
+	background: rgba(2, 6, 23, 0.82);
+	backdrop-filter: blur(12px);
+}
+
+.modal-card {
+	width: min(96vw, 1240px);
+	height: calc(100vh - 40px);
+	max-height: none;
+	overflow: hidden;
+	padding: 32px;
+	border: 1px solid rgba(148, 163, 184, 0.18);
+	border-radius: 24px;
+	background: linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.92));
+	box-shadow: 0 30px 100px rgba(2, 6, 23, 0.7);
+	display: flex;
+	flex-direction: column;
+}
+
+.modal-card h2 {
+	margin: 0 0 20px;
+	flex: 0 0 auto;
+  color: #f8fafc;
+}
+
+.modal-card form {
+  display: grid;
+	gap: 14px;
+	flex: 1 1 auto;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+.modal-card input,
+.modal-card select,
+.modal-card textarea {
+  width: 100%;
+	padding: 14px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.82);
+  color: #e2e8f0;
+  outline: none;
+	transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+.modal-card textarea {
+	min-height: 160px;
+  resize: vertical;
+}
+
+.modal-card input:focus,
+.modal-card select:focus,
+.modal-card textarea:focus {
+	border-color: #60a5fa;
+	box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.16);
+	background: rgba(15, 23, 42, 0.95);
+}
+
+.modal-card form > input,
+.modal-card form > select,
+.modal-card form > textarea {
+	min-width: 0;
+}
+
+.modal-card form > input[name="companyName"],
+.modal-card form > input[name="role"] {
+	width: 100%;
+}
+
+.modal-card form {
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.modal-card form > h2,
+.modal-card form > .modal-actions,
+.modal-card form > textarea {
+	grid-column: 1 / -1;
+}
+
+.modal-card form > input[name="companyName"],
+.modal-card form > input[name="role"],
+.modal-card form > input[name="location"],
+.modal-card form > input[name="appliedThrough"],
+.modal-card form > input[name="jobLink"],
+.modal-card form > select[name="status"] {
+	grid-column: span 1;
+}
+
+.modal-card form > input[name="appliedOn"] {
+	grid-column: span 1;
+}
+
+.modal-actions {
+	grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+	margin-top: 4px;
+	padding-top: 8px;
+}
+
+.modal-actions button {
+	min-width: 120px;
+	height: 48px;
+	padding: 0 18px;
+	border-radius: 12px;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.modal-actions button[type="button"] {
+	border: 1px solid rgba(148, 163, 184, 0.22);
+	background: rgba(15, 23, 42, 0.72);
+	color: #e2e8f0;
+}
+
+.modal-actions button[type="submit"] {
+	border: 1px solid rgba(96, 165, 250, 0.28);
+	background: rgba(37, 99, 235, 0.18);
+	color: #dbeafe;
+}
+
+.modal-actions button:hover {
+	background: rgba(37, 99, 235, 0.28);
+}
+
+@media (max-width: 820px) {
+	.modal-card {
+		width: min(96vw, 760px);
+		height: calc(100vh - 24px);
+		padding: 20px;
+	}
+
+	.modal-card form {
+		grid-template-columns: 1fr;
+	}
+
+	.modal-card form > h2,
+	.modal-card form > .modal-actions,
+	.modal-card form > textarea,
+	.modal-card form > input,
+	.modal-card form > select {
+		grid-column: 1 / -1;
+	}
+
+	.modal-actions {
+		flex-direction: column-reverse;
+	}
+
+	.modal-actions button {
+		width: 100%;
+	}
 }
 
 @media (max-width: 640px) {
@@ -271,4 +466,43 @@ select {
 	.toolbar button {
 		flex: 1 1 180px;
 	}
+}
+
+.company-link {
+  background: none;
+  border: none;
+  color: #bfdbfe;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.company-link:hover {
+  text-decoration: underline;
+}
+
+.details-card {
+  margin-top: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 18px;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+}
+
+.details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.details-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.details-grid {
+  display: grid;
+  gap: 10px;
 }
