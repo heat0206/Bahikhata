@@ -1,23 +1,71 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import Lottie from 'lottie-react'
 import './App.css'
+import trashBinAnimation from './assets/trash-bin.json'
+
+const LottieComponent = Lottie.default || Lottie;
+
+function AnimatedDeleteButton({ onClick }) {
+  const lottieRef = useRef(null);
+
+  const handleMouseEnter = () => {
+    if (lottieRef.current) {
+      lottieRef.current.play();
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (lottieRef.current) {
+      lottieRef.current.stop();
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className="btn-ghost delete-btn"
+      onClick={onClick}
+      title="Delete Application"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <LottieComponent
+        lottieRef={lottieRef}
+        animationData={trashBinAnimation}
+        loop={true}
+        autoplay={false}
+        style={{ width: 24, height: 24 }}
+      />
+    </button>
+  );
+}
 
 function App() {
 
-  const[search, setSearch] = useState("");
-  const[filter, setFilter] = useState("");
-  const[selectedApplication, setSelectedApplication] = useState(null);
-  const[form , setForm] = useState({
+  const [search, setSearch] = useState("");
+  const [filter, setFilter] = useState("");
+  const [editingCompanyName, seteditingCompanyName] = useState(null);
+  const [selectedApplication, setSelectedApplication] = useState(null);
+  const [form, setForm] = useState({
     companyName: '',
-    role:'',
-    location:'',
-    appliedThrough:'',
+    role: '',
+    location: '',
+    appliedThrough: '',
     appliedOn: '',
-    status:'',
-    jobLink:'',
-    notes:'',
+    status: '',
+    jobLink: '',
+    notes: '',
   })
 
-  const [isFormOpen , setIsFormOpen] = useState(false)
+  const openEditForm = () => {
+    setForm(selectedApplication);
+    seteditingCompanyName(selectedApplication.companyName);
+
+    setIsFormOpen(true);
+  }
+
+
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
   const openDetails = (application) => {
     setSelectedApplication(application)
@@ -28,13 +76,13 @@ function App() {
   }
 
 
-  
+
   const handleChange = (event) => {
-    const{name,value} = event.target
+    const { name, value } = event.target
 
     setForm((currentForm) => ({
       ...currentForm,
-      [name]:value,
+      [name]: value,
     }))
   }
 
@@ -45,25 +93,36 @@ function App() {
       ...form,
     }
 
-    setApplications((curretApplications)=> [
+    setApplications((curretApplications) => [
       newApplication,
       ...curretApplications,
     ])
 
     setForm({
       companyName: '',
-      role:'',
-      location:'',
-      appliedThrough:'',
+      role: '',
+      location: '',
+      appliedThrough: '',
       appliedOn: '',
-      status:'',
-      jobLink:'',
-      notes:'',
+      status: '',
+      jobLink: '',
+      notes: '',
     })
 
     setIsFormOpen(false)
   }
-  
+
+  const handleDelete = (companyNameToDelete) => {
+    if (window.confirm(`Are you sure you want to delete the application for ${companyNameToDelete}?`)) {
+      setApplications((curretApplications) =>
+        curretApplications.filter(app => app.companyName !== companyNameToDelete));
+
+      if (selectedApplication?.companyName === companyNameToDelete) {
+        setSelectedApplication(null);
+      }
+    }
+  }
+
   const [applications, setApplications] = useState(() => {
     const savedApplications = localStorage.getItem('applications')
     return savedApplications ? JSON.parse(savedApplications) : [
@@ -89,10 +148,10 @@ function App() {
   })
 
   const filteredApplications = applications.filter((application) => {
-    const matchesSearch = 
+    const matchesSearch =
       application.companyName.toLowerCase().includes(search.toLowerCase()) ||
       application.role.toLowerCase().includes(search.toLowerCase())
-    const matchesFilter = 
+    const matchesFilter =
       filter === "" || application.status === filter
 
     return matchesSearch && matchesFilter
@@ -104,24 +163,55 @@ function App() {
     !isApplicationsEmpty && hasSearch && filteredApplications.length === 0
 
   const getStatusClassName = (status) => {
-    if (status === 'Rejected') return 'status-rejected'
-    if (status === 'Applied') return 'status-applied'
-    if (status === 'Offer') return 'status-offer'
-    return 'status-default'
+    if (!status) return 'status-default';
+    return `status-${status.toLowerCase()}`;
   }
 
+  // --- STATS & CHART CALCULATIONS ---
+  const totalApplications = applications.length;
+  const statusCounts = applications.reduce((acc, app) => {
+    const status = app.status || 'Unknown';
+    acc[status] = (acc[status] || 0) + 1;
+    return acc;
+  }, {});
+
+  const statusColors = {
+    'Applied': '#000000',
+    'Offer': '#333333',
+    'Interview': '#555555',
+    'OA': '#777777',
+    'Hackathon': '#999999',
+    'Rejected': '#cccccc',
+    'Withdrawn': '#e5e5e5',
+    'Unknown': '#f5f5f5'
+  };
+
+  let cumulativePercent = 0;
+  const gradientStops = Object.entries(statusCounts).map(([status, count]) => {
+    const percent = (count / totalApplications) * 100;
+    const start = cumulativePercent;
+    cumulativePercent += percent;
+    const color = statusColors[status] || statusColors['Unknown'];
+    return `${color} ${start}% ${cumulativePercent}%`;
+  }).join(', ');
+
+  const donutStyle = {
+    background: totalApplications > 0 ? `conic-gradient(${gradientStops})` : '#f5f5f5'
+  };
+  // ----------------------------------
+
   useEffect(() => {
-  localStorage.setItem(
-    "applications",
-    JSON.stringify(applications)
-  );
-}, [applications]); 
+    localStorage.setItem(
+      "applications",
+      JSON.stringify(applications)
+    );
+  }, [applications]);
 
   return (
     <div className="app-shell">
       <header className="app-header">
-        <div>
-          <p className="app-eyebrow">PrepBoard</p>
+        <div className="header-content">
+          <p className="app-eyebrow">PREPBOARD</p>
           <h1 className="app-title">Interview & Internship Application Tracker</h1>
         </div>
       </header>
@@ -131,19 +221,226 @@ function App() {
 
           {applications.length > 0 && (
             <div className="toolbar">
-              
+              <div className="toolbar-controls">
+                <input
+                  type="text"
+                  placeholder="Search your Applications"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                />
+
+                <select
+                  value={filter}
+                  onChange={(event) => setFilter(event.target.value)}
+                >
+                  <option value="">All Statuses</option>
+                  <option value="Applied">Applied</option>
+                  <option value="OA">OA</option>
+                  <option value="Interview">Interview</option>
+                  <option value="Hackathon">Hackathon</option>
+                  <option value="Offer">Offer</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Withdrawn">Withdrawn</option>
+                </select>
+              </div>
+
+              <div className="toolbar-actions">
+                <button type="button" className="btn-primary" onClick={() => setIsFormOpen(true)}>
+                  Add Application
+                </button>
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  onClick={() => {
+                    setSearch("")
+                    setFilter("")
+                  }}
+                >
+                  Clear Filters
+                </button>
+              </div>
+            </div>
+          )}
+
+          {applications.length === 0 ? (
+            <div className="empty-state">
+              <p>Start Tracking your Applications!</p>
+              <button type="button" className="btn-primary" onClick={() => setIsFormOpen(true)}>
+                Add Application
+              </button>
+            </div>
+          ) : showNoSearchMatch ? (
+            <p>No applications found matching your search criteria.</p>
+          ) : (
+            <div className="content-grid">
+              <div className="table-section">
+                {selectedApplication ? (
+                  <div className="details-card">
+                    <div className="details-header">
+                      <div className="details-title-group">
+                        <h2>{selectedApplication.companyName}</h2>
+                        <span className={`status-badge ${getStatusClassName(selectedApplication.status)}`}>
+                          {selectedApplication.status}
+                        </span>
+                      </div>
+                      <div className="details-actions">
+                        <button type="button" className="btn-ghost" onClick={closeDetails}>Back</button>
+                        <button type="button" className="btn-outline" onClick={openEditForm}>Edit</button>
+                      </div>
+                    </div>
+
+                    <div className="details-content">
+                      <div className="details-grid">
+                        <div className="metadata-group">
+                          <span className="metadata-label">Role</span>
+                          <span className="metadata-value">{selectedApplication.role || '—'}</span>
+                        </div>
+                        <div className="metadata-group">
+                          <span className="metadata-label">Location</span>
+                          <span className="metadata-value">{selectedApplication.location || '—'}</span>
+                        </div>
+                        <div className="metadata-group">
+                          <span className="metadata-label">Applied Through</span>
+                          <span className="metadata-value">{selectedApplication.appliedThrough || '—'}</span>
+                        </div>
+                        <div className="metadata-group">
+                          <span className="metadata-label">Applied On</span>
+                          <span className="metadata-value">{selectedApplication.appliedOn || '—'}</span>
+                        </div>
+                        <div className="metadata-group">
+                          <span className="metadata-label">Job Link</span>
+                          <span className="metadata-value">{selectedApplication.jobLink || '—'}</span>
+                        </div>
+                        <div className="metadata-group notes-group">
+                          <span className="metadata-label">Notes</span>
+                          <span className="metadata-value">{selectedApplication.notes || '—'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Company Name</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Applied On</th>
+                        <th>Remove</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {filteredApplications.map((application) => (
+                        <tr key={application.companyName}>
+                          <td>
+                            <button
+                              type="button"
+                              className="company-link"
+                              onClick={() => openDetails(application)}
+                            >
+                              {application.companyName}
+                            </button>
+                          </td>
+                          <td>{application.role}</td>
+                          <td>
+                            <span className={`status-badge ${getStatusClassName(application.status)}`}>
+                              {application.status}
+                            </span>
+                          </td>
+                          <td>{application.appliedOn}</td>
+                          <td>
+                            <AnimatedDeleteButton onClick={() => handleDelete(application.companyName)} />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+
+              <div className="overview-section">
+                <div className="overview-card">
+                  <h3 className="overview-title">Overview</h3>
+                  <div className="stat-box">
+                    <span className="stat-value">{totalApplications}</span>
+                    <span className="stat-label">Total Applications</span>
+                  </div>
+
+                  <div className="donut-wrapper">
+                    <div className="donut-chart" style={donutStyle}></div>
+                  </div>
+
+                  <div className="chart-legend">
+                    {Object.entries(statusCounts).map(([status, count]) => (
+                      <div key={status} className="legend-item">
+                        <span className="legend-color" style={{ backgroundColor: statusColors[status] || statusColors['Unknown'] }}></span>
+                        <div className="legend-text">
+                          <span className="legend-label">{status}</span>
+                          <span className="legend-count">{count}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+          }
+        </section>
+      </main>
+      {isFormOpen && (
+
+        <div className="modal-overlay">
+          <div className="modal-card">
+            <h2>Add Application</h2>
+
+            <form onSubmit={handleSubmit}>
               <input
                 type="text"
-                placeholder="Search your Applications"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
+                name="companyName"
+                placeholder="Company Name"
+                value={form.companyName}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="role"
+                placeholder="Role"
+                value={form.role}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="location"
+                placeholder="Location"
+                value={form.location}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="appliedThrough"
+                placeholder="Applied Through"
+                value={form.appliedThrough}
+                onChange={handleChange}
+              />
+
+              <input
+                type="date"
+                name="appliedOn"
+                value={form.appliedOn}
+                onChange={handleChange}
               />
 
               <select
-                value={filter}
-                onChange={(event) => setFilter(event.target.value)}
+                name="status"
+                value={form.status}
+                onChange={handleChange}
               >
-                <option value="">All Statuses</option>
+                <option value="">Select Status</option>
                 <option value="Applied">Applied</option>
                 <option value="OA">OA</option>
                 <option value="Interview">Interview</option>
@@ -153,179 +450,31 @@ function App() {
                 <option value="Withdrawn">Withdrawn</option>
               </select>
 
-              <button type="button" onClick={() => setIsFormOpen(true)}>
-                Add Application
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setSearch("")
-                  setFilter("")
-                }}
-              >
-                Clear Filters
-              </button>
-            </div>
-          )}
-          
-          {applications.length === 0 ? (
-            <div className="empty-state">
-              <p>Start Tracking your Applications!</p>
-              <button type="button" onClick={() => setIsFormOpen(true)}>
-                Add Application
-              </button>
-            </div>
-          ) : showNoSearchMatch ? (
-            <p>No applications found matching your search criteria.</p>
-          ) : (
-            <>
+              <input
+                type="text"
+                name="jobLink"
+                placeholder="Job Link"
+                value={form.jobLink}
+                onChange={handleChange}
+              />
 
-              {selectedApplication ? (
-                <div className="details-card">
-                  <div className="details-header">
-                    <h2>{selectedApplication.companyName}</h2>
-                    <div className="details-actions">
-                      <button type="button" onClick={closeDetails}>Back</button>
-                      <button type="button">Edit</button>
-                    </div>
-                  </div>
+              <textarea
+                name="notes"
+                placeholder="Notes"
+                value={form.notes}
+                onChange={handleChange}
+              />
 
-                  <div className="details-grid">
-                    <p><strong>Role:</strong> {selectedApplication.role || '—'}</p>
-                    <p><strong>Location:</strong> {selectedApplication.location || '—'}</p>
-                    <p><strong>Applied Through:</strong> {selectedApplication.appliedThrough || '—'}</p>
-                    <p><strong>Applied On:</strong> {selectedApplication.appliedOn || '—'}</p>
-                    <p><strong>Status:</strong> {selectedApplication.status || '—'}</p>
-                    <p><strong>Job Link:</strong> {selectedApplication.jobLink || '—'}</p>
-                    <p><strong>Notes:</strong> {selectedApplication.notes || '—'}</p>
-                  </div>
-                </div>
-              ) : (
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Company Name</th>
-                      <th>Role</th>
-                      <th>Status</th>
-                      <th>Applied On</th>
-                    </tr>
-                  </thead>
-
-                  <tbody>
-                    {filteredApplications.map((application) => (
-                      <tr key={application.companyName}>
-                      <td>
-                        <button
-                        type="button"
-                        className="company-link"
-                        onClick={() => openDetails(application)}
-                      >
-                        {application.companyName}
-                      </button>
-                      </td>
-                      <td>{application.role}</td>
-                      <td>
-                        <span className={`status-badge ${getStatusClassName(application.status)}`}>
-                          {application.status}
-                        </span>
-                      </td>
-                      <td>{application.appliedOn}</td>
-                    </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </>
-          )
-        }
-        </section>
-      </main>
-        {isFormOpen && (
-
-          <div className="modal-overlay">
-            <div className="modal-card">
-              <h2>Add Application</h2>
-
-              <form onSubmit={handleSubmit}>
-                <input
-                  type="text"
-                  name="companyName"
-                  placeholder="Company Name"
-                  value={form.companyName}
-                  onChange={handleChange}
-                />
-
-                <input
-                  type="text"
-                  name="role"
-                  placeholder="Role"
-                  value={form.role}
-                  onChange={handleChange}
-                />
-
-                <input
-                  type="text"
-                  name="location"
-                  placeholder="Location"
-                  value={form.location}
-                  onChange={handleChange}
-                />
-
-                <input
-                  type="text"
-                  name="appliedThrough"
-                  placeholder="Applied Through"
-                  value={form.appliedThrough}
-                  onChange={handleChange}
-                />
-
-                <input
-                  type="date"
-                  name="appliedOn"
-                  value={form.appliedOn}
-                  onChange={handleChange}
-                />
-
-                <select
-                  name="status"
-                  value={form.status}
-                  onChange={handleChange}
-                >
-                  <option value="">Select Status</option>
-                  <option value="Applied">Applied</option>
-                  <option value="OA">OA</option>
-                  <option value="Interview">Interview</option>
-                  <option value="Hackathon">Hackathon</option>
-                  <option value="Offer">Offer</option>
-                  <option value="Rejected">Rejected</option>
-                  <option value="Withdrawn">Withdrawn</option>
-                </select>
-
-                <input
-                  type="text"
-                  name="jobLink"
-                  placeholder="Job Link"
-                  value={form.jobLink}
-                  onChange={handleChange}
-                />
-
-                <textarea
-                  name="notes"
-                  placeholder="Notes"
-                  value={form.notes}
-                  onChange={handleChange}
-                />
-
-                <div className="modal-actions">
-                  <button type="button" onClick={() => setIsFormOpen(false)}>
-                    Cancel
-                  </button>
-                  <button type="submit">Add</button>
-                </div>
-              </form>
-            </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={() => setIsFormOpen(false)}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn-primary">Add</button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+      )}
     </div>
   )
 }
