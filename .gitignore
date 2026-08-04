@@ -1,0 +1,36 @@
+# Frontend dependencies
+Project/node_modules/
+
+# Backend dependencies
+backend/node_modules/
+node_modules
+
+# Environment files
+Project/.env
+backend/.env
+
+# Build output
+Project/dist/
+Project/dist-ssr/
+backend/dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Local config
+*.local
+
+# IDE files
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj*
+*.sln
+*.sw?

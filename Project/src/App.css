@@ -408,7 +408,7 @@ tbody tr:last-child td {
 
 .modal-card {
     width: 100%;
-    max-width: 600px;
+    max-width: 900px;
     max-height: calc(100vh - 48px);
     overflow: hidden;
     padding: 32px;
@@ -428,10 +428,23 @@ tbody tr:last-child td {
 }
 
 .modal-card form {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 16px;
     overflow-y: auto;
     padding-right: 8px;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+@media (max-width: 640px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .modal-card input,

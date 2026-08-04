@@ -40,11 +40,55 @@ function AnimatedDeleteButton({ onClick }) {
   );
 }
 
+// --- API Helper Functions ---
+// Each function talks to the Express backend via the Vite proxy.
+// All endpoints return { success: true, data: ... } or { success: false, message: "..." }
+
+const API_URL = '/api/applications';
+
+async function fetchApplications() {
+  const res = await fetch(API_URL);
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message);
+  return json.data;
+}
+
+async function createApplication(applicationData) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(applicationData),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message);
+  return json.data;
+}
+
+async function updateApplication(id, applicationData) {
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(applicationData),
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message);
+  return json.data;
+}
+
+async function deleteApplication(id) {
+  const res = await fetch(`${API_URL}/${id}`, {
+    method: 'DELETE',
+  });
+  const json = await res.json();
+  if (!json.success) throw new Error(json.message);
+  return json.data;
+}
+
 function App() {
 
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("");
-  const [editingCompanyName, seteditingCompanyName] = useState(null);
+  const [editingId, setEditingId] = useState(null); // Tracks _id of the application being edited
   const [selectedApplication, setSelectedApplication] = useState(null);
   const [form, setForm] = useState({
     companyName: '',
@@ -57,9 +101,23 @@ function App() {
     notes: '',
   })
 
+  const resetForm = () => {
+    setForm({
+      companyName: '',
+      role: '',
+      location: '',
+      appliedThrough: '',
+      appliedOn: '',
+      status: '',
+      jobLink: '',
+      notes: '',
+    })
+    setEditingId(null)
+  }
+
   const openEditForm = () => {
     setForm(selectedApplication);
-    seteditingCompanyName(selectedApplication.companyName);
+    setEditingId(selectedApplication._id); // Track by MongoDB _id
 
     setIsFormOpen(true);
   }
@@ -86,71 +144,67 @@ function App() {
     }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
 
-    const newApplication = {
-      ...form,
+    try {
+      if (editingId) {
+        // UPDATE: send PUT request, then re-fetch all applications
+        await updateApplication(editingId, form)
+      } else {
+        // CREATE: send POST request, then re-fetch all applications
+        await createApplication(form)
+      }
+
+      // Re-fetch from the database (single source of truth)
+      const fresh = await fetchApplications()
+      setApplications(fresh)
+
+      // If we were editing, update the selected application with fresh data
+      if (editingId) {
+        const updated = fresh.find((app) => app._id === editingId)
+        setSelectedApplication(updated || null)
+      }
+    } catch (error) {
+      console.error('Failed to save application:', error.message)
     }
 
-    setApplications((curretApplications) => [
-      newApplication,
-      ...curretApplications,
-    ])
-
-    setForm({
-      companyName: '',
-      role: '',
-      location: '',
-      appliedThrough: '',
-      appliedOn: '',
-      status: '',
-      jobLink: '',
-      notes: '',
-    })
-
+    resetForm()
     setIsFormOpen(false)
   }
 
-  const handleDelete = (companyNameToDelete) => {
-    if (window.confirm(`Are you sure you want to delete the application for ${companyNameToDelete}?`)) {
-      setApplications((curretApplications) =>
-        curretApplications.filter(app => app.companyName !== companyNameToDelete));
+  const handleDelete = async (id, companyName) => {
+    if (window.confirm(`Are you sure you want to delete the application for ${companyName}?`)) {
+      try {
+        await deleteApplication(id)
 
-      if (selectedApplication?.companyName === companyNameToDelete) {
-        setSelectedApplication(null);
+        // Re-fetch from the database (single source of truth)
+        const fresh = await fetchApplications()
+        setApplications(fresh)
+
+        if (selectedApplication?._id === id) {
+          setSelectedApplication(null);
+        }
+      } catch (error) {
+        console.error('Failed to delete application:', error.message)
       }
     }
   }
 
-  const [applications, setApplications] = useState(() => {
-    const savedApplications = localStorage.getItem('applications')
-    return savedApplications ? JSON.parse(savedApplications) : [
-      {
-        companyName: "Google",
-        role: "Summer 2027 Intern",
-        status: "Applied",
-        appliedOn: "2026-07-08",
-      },
-      {
-        companyName: "JP Morgan",
-        role: "SEP 2027",
-        status: "Hackathon",
-        appliedOn: "2026-01-08",
-      },
-      {
-        companyName: "Microsoft",
-        role: "2027 Intern",
-        status: "Applied",
-        appliedOn: "2026-07-15",
-      }
-    ]
-  })
+  // Initialize with an empty array — data is fetched from the backend on mount
+  const [applications, setApplications] = useState([])
+
+  // Fetch all applications from MongoDB when the component mounts
+  useEffect(() => {
+    fetchApplications()
+      .then((data) => setApplications(data))
+      .catch((error) => console.error('Failed to load applications:', error.message))
+  }, [])
 
   const filteredApplications = applications.filter((application) => {
     const matchesSearch =
       application.companyName.toLowerCase().includes(search.toLowerCase()) ||
-      application.role.toLowerCase().includes(search.toLowerCase())
+      (application.role && application.role.toLowerCase().includes(search.toLowerCase()))
     const matchesFilter =
       filter === "" || application.status === filter
 
@@ -200,13 +254,6 @@ function App() {
   };
   // ----------------------------------
 
-  useEffect(() => {
-    localStorage.setItem(
-      "applications",
-      JSON.stringify(applications)
-    );
-  }, [applications]);
-
   return (
     <div className="app-shell">
       <header className="app-header">
@@ -245,7 +292,10 @@ function App() {
               </div>
 
               <div className="toolbar-actions">
-                <button type="button" className="btn-primary" onClick={() => setIsFormOpen(true)}>
+                <button type="button" className="btn-primary" onClick={() => {
+                  resetForm()
+                  setIsFormOpen(true)
+                }}>
                   Add Application
                 </button>
                 <button
@@ -265,7 +315,10 @@ function App() {
           {applications.length === 0 ? (
             <div className="empty-state">
               <p>Start Tracking your Applications!</p>
-              <button type="button" className="btn-primary" onClick={() => setIsFormOpen(true)}>
+              <button type="button" className="btn-primary" onClick={() => {
+                resetForm()
+                setIsFormOpen(true)
+              }}>
                 Add Application
               </button>
             </div>
@@ -332,7 +385,7 @@ function App() {
 
                     <tbody>
                       {filteredApplications.map((application) => (
-                        <tr key={application.companyName}>
+                        <tr key={application._id}>
                           <td>
                             <button
                               type="button"
@@ -350,7 +403,7 @@ function App() {
                           </td>
                           <td>{application.appliedOn}</td>
                           <td>
-                            <AnimatedDeleteButton onClick={() => handleDelete(application.companyName)} />
+                            <AnimatedDeleteButton onClick={() => handleDelete(application._id, application.companyName)} />
                           </td>
                         </tr>
                       ))}
@@ -393,70 +446,72 @@ function App() {
 
         <div className="modal-overlay">
           <div className="modal-card">
-            <h2>Add Application</h2>
+            <h2>{editingId ? 'Edit Application' : 'Add Application'}</h2>
 
             <form onSubmit={handleSubmit}>
-              <input
-                type="text"
-                name="companyName"
-                placeholder="Company Name"
-                value={form.companyName}
-                onChange={handleChange}
-              />
+              <div className="form-grid">
+                <input
+                  type="text"
+                  name="companyName"
+                  placeholder="Company Name"
+                  value={form.companyName}
+                  onChange={handleChange}
+                />
 
-              <input
-                type="text"
-                name="role"
-                placeholder="Role"
-                value={form.role}
-                onChange={handleChange}
-              />
+                <input
+                  type="text"
+                  name="role"
+                  placeholder="Role"
+                  value={form.role}
+                  onChange={handleChange}
+                />
 
-              <input
-                type="text"
-                name="location"
-                placeholder="Location"
-                value={form.location}
-                onChange={handleChange}
-              />
+                <input
+                  type="text"
+                  name="location"
+                  placeholder="Location"
+                  value={form.location}
+                  onChange={handleChange}
+                />
 
-              <input
-                type="text"
-                name="appliedThrough"
-                placeholder="Applied Through"
-                value={form.appliedThrough}
-                onChange={handleChange}
-              />
+                <input
+                  type="text"
+                  name="appliedThrough"
+                  placeholder="Applied Through"
+                  value={form.appliedThrough}
+                  onChange={handleChange}
+                />
 
-              <input
-                type="date"
-                name="appliedOn"
-                value={form.appliedOn}
-                onChange={handleChange}
-              />
+                <input
+                  type="date"
+                  name="appliedOn"
+                  value={form.appliedOn}
+                  onChange={handleChange}
+                />
 
-              <select
-                name="status"
-                value={form.status}
-                onChange={handleChange}
-              >
-                <option value="">Select Status</option>
-                <option value="Applied">Applied</option>
-                <option value="OA">OA</option>
-                <option value="Interview">Interview</option>
-                <option value="Hackathon">Hackathon</option>
-                <option value="Offer">Offer</option>
-                <option value="Rejected">Rejected</option>
-                <option value="Withdrawn">Withdrawn</option>
-              </select>
+                <select
+                  name="status"
+                  value={form.status}
+                  onChange={handleChange}
+                >
+                  <option value="">Select Status</option>
+                  <option value="Applied">Applied</option>
+                  <option value="OA">OA</option>
+                  <option value="Interview">Interview</option>
+                  <option value="Hackathon">Hackathon</option>
+                  <option value="Offer">Offer</option>
+                  <option value="Rejected">Rejected</option>
+                  <option value="Withdrawn">Withdrawn</option>
+                </select>
 
-              <input
-                type="text"
-                name="jobLink"
-                placeholder="Job Link"
-                value={form.jobLink}
-                onChange={handleChange}
-              />
+                <input
+                  type="text"
+                  name="jobLink"
+                  placeholder="Job Link"
+                  value={form.jobLink}
+                  onChange={handleChange}
+                />
+              </div>
 
               <textarea
                 name="notes"
@@ -466,10 +521,15 @@ function App() {
               />
 
               <div className="modal-actions">
-                <button type="button" className="btn-ghost" onClick={() => setIsFormOpen(false)}>
+                <button type="button" className="btn-ghost" onClick={() => {
+                  resetForm()
+                  setIsFormOpen(false)
+                }}>
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary">Add</button>
+                <button type="submit" className="btn-primary">
+                  {editingId ? 'Save' : 'Add'}
+                </button>
               </div>
             </form>
           </div>
