@@ -1,15 +1,15 @@
 import { Briefcase } from '@phosphor-icons/react'
 
-// Monochrome-to-accent palette for the donut chart
+// Bright vibrant palette for the donut chart (matches status badge colors)
 const statusColors = {
-  'Applied':   '#2563EB',  // accent blue
-  'Interview': '#18181B',  // near-black
-  'OA':        '#3F3F46',  // dark grey
-  'Hackathon': '#71717A',  // mid grey
-  'Offer':     '#09090B',  // jet
-  'Rejected':  '#D4D4D8',  // light grey
-  'Withdrawn': '#E4E4E7',  // border grey
-  'Unknown':   '#F4F4F5',  // muted
+  'Applied':   '#3b82f6',  // bright blue
+  'Interview': '#22c55e',  // bright green
+  'OA':        '#f97316',  // bright orange
+  'Hackathon': '#a855f7',  // bright purple
+  'Offer':     '#f59e0b',  // bright amber
+  'Rejected':  '#ef4444',  // bright red
+  'Withdrawn': '#94a3b8',  // slate
+  'Unknown':   '#d4d4d8',  // muted
 }
 
 function OverviewPanel({ applications }) {

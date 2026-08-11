@@ -1,8 +1,15 @@
 import { BriefcaseMetal, SignOut } from '@phosphor-icons/react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 function Header({ totalApplications }) {
   const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
 
   return (
     <header className="app-header">
@@ -14,7 +21,7 @@ function Header({ totalApplications }) {
         </div>
       </div>
 
-      <div className="header-meta flex gap-4 items-center">
+      <div className="header-meta" style={{ gap: '12px' }}>
         {totalApplications > 0 && (
           <div className="header-stat-chip">
             <BriefcaseMetal size={14} weight="bold" />
@@ -23,8 +30,8 @@ function Header({ totalApplications }) {
           </div>
         )}
         {user && (
-          <button onClick={logout} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors">
-            <SignOut size={16} /> Logout
+          <button onClick={handleLogout} className="btn-logout" id="logout-btn">
+            <SignOut size={16} weight="bold" /> Logout
           </button>
         )}
       </div>
@@ -33,3 +40,4 @@ function Header({ totalApplications }) {
 }
 
 export default Header
+
