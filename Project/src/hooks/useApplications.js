@@ -45,6 +45,7 @@ export function useApplications() {
 
   return {
     applications,
+    refreshApplications,
     addApplication,
     editApplication,
     removeApplication,

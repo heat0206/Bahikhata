@@ -8,11 +8,12 @@ import ApplicationTable from './components/ApplicationTable'
 import ApplicationDetails from './components/ApplicationDetails'
 import ApplicationFormModal from './components/ApplicationFormModal'
 import OverviewPanel from './components/OverviewPanel'
+import ChatPanel from './components/ChatPanel'
 import { ClipboardText, Plus } from '@phosphor-icons/react'
 
 function App() {
   // --- Data & CRUD ---
-  const { applications, addApplication, editApplication, removeApplication } = useApplications()
+  const { applications, refreshApplications, addApplication, editApplication, removeApplication } = useApplications()
 
   // --- Form & Modal ---
   const { form, editingId, isFormOpen, handleChange, openAddForm, openEditForm, closeForm } = useApplicationForm()
@@ -133,6 +134,8 @@ function App() {
           onCancel={closeForm}
         />
       )}
+
+      <ChatPanel onRefreshApplications={refreshApplications} />
     </div>
   )
 }
