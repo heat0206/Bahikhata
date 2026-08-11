@@ -4,7 +4,7 @@ const Application = require('../models/Application');
 // Returns all applications, newest first
 const getApplications = async (req, res) => {
   try {
-    const applications = await Application.find().sort({ createdAt: -1 });
+    const applications = await Application.find({ userId: req.user.id }).sort({ createdAt: -1 });
     res.status(200).json({ success: true, data: applications });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to fetch applications' });
@@ -15,7 +15,8 @@ const getApplications = async (req, res) => {
 // Creates a new application and returns it
 const createApplication = async (req, res) => {
   try {
-    const application = await Application.create(req.body);
+    const applicationData = { ...req.body, userId: req.user.id };
+    const application = await Application.create(applicationData);
     res.status(201).json({ success: true, data: application });
   } catch (error) {
     // Mongoose validation errors have a 'name' of 'ValidationError'
@@ -31,8 +32,8 @@ const createApplication = async (req, res) => {
 // Updates an existing application by its MongoDB _id
 const updateApplication = async (req, res) => {
   try {
-    const application = await Application.findByIdAndUpdate(
-      req.params.id,
+    const application = await Application.findOneAndUpdate(
+      { _id: req.params.id, userId: req.user.id },
       req.body,
       { new: true, runValidators: true } // Return the updated doc & run schema validation
     );
@@ -55,7 +56,7 @@ const updateApplication = async (req, res) => {
 // Deletes an application by its MongoDB _id
 const deleteApplication = async (req, res) => {
   try {
-    const application = await Application.findByIdAndDelete(req.params.id);
+    const application = await Application.findOneAndDelete({ _id: req.params.id, userId: req.user.id });
 
     if (!application) {
       return res.status(404).json({ success: false, message: 'Application not found' });

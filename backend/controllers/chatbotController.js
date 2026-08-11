@@ -82,7 +82,7 @@ const tools = [
 ];
 
 // ── Tool Handlers ───────────────────────────────────
-async function handleAddApplication(args) {
+async function handleAddApplication(args, userId) {
   const today = new Date().toISOString().split('T')[0];
   const status = args.status || 'Applied';
 
@@ -95,6 +95,7 @@ async function handleAddApplication(args) {
   }
 
   const doc = await Application.create({
+    userId,
     companyName: args.company,
     role: args.role || '',
     status,
@@ -108,7 +109,7 @@ async function handleAddApplication(args) {
   };
 }
 
-async function handleUpdateStatus(args) {
+async function handleUpdateStatus(args, userId) {
   const { company, newStatus } = args;
 
   // Validate status enum
@@ -119,10 +120,11 @@ async function handleUpdateStatus(args) {
     };
   }
 
-  // Case-insensitive match with escaped regex
+  // Case-insensitive match with escaped regex + userId scoping
   const escaped = escapeRegex(company);
   const matches = await Application.find({
     companyName: { $regex: escaped, $options: 'i' },
+    userId,
   });
 
   if (matches.length === 0) {
@@ -151,11 +153,12 @@ async function handleUpdateStatus(args) {
   };
 }
 
-async function handleRemoveApplication(args) {
+async function handleRemoveApplication(args, userId) {
   const { company } = args;
   const escaped = escapeRegex(company);
   const matches = await Application.find({
     companyName: { $regex: escaped, $options: 'i' },
+    userId,
   });
 
   if (matches.length === 0) {
@@ -188,11 +191,11 @@ async function handleRemoveApplication(args) {
 }
 
 // ── Pending Action Handlers ─────────────────────────
-async function handlePendingDelete(message, pendingAction) {
+async function handlePendingDelete(message, pendingAction, userId) {
   const answer = message.trim().toLowerCase();
 
   if (answer === 'yes' || answer === 'y') {
-    const doc = await Application.findByIdAndDelete(pendingAction.id);
+    const doc = await Application.findOneAndDelete({ _id: pendingAction.id, userId });
     if (!doc) {
       return {
         reply: `That application was already removed or couldn't be found.`,
@@ -212,28 +215,28 @@ async function handlePendingDelete(message, pendingAction) {
   };
 }
 
-// ── Main Handler ────────────────────────────────────
+// ── Main Chat Endpoint ──────────────────────────────
 const handleMessage = async (req, res) => {
   const { message, pendingAction } = req.body;
+  const userId = req.user.id;
 
-  if (!message || typeof message !== 'string') {
-    return res.status(400).json({
-      reply: 'Please send a message.',
-      refreshNeeded: false,
-    });
+  if (!message) {
+    return res.status(400).json({ reply: 'Message is required', refreshNeeded: false });
   }
 
-  // Handle pending delete confirmation
-  if (pendingAction && pendingAction.type === 'delete') {
-    try {
-      const result = await handlePendingDelete(message, pendingAction);
-      return res.json(result);
-    } catch (error) {
-      console.error('Chatbot pending action error:', error);
-      return res.status(500).json({
-        reply: 'Something went wrong while processing your confirmation. Please try again.',
-        refreshNeeded: false,
-      });
+  // If we are waiting for a confirmation (e.g., delete)
+  if (pendingAction) {
+    if (pendingAction.type === 'delete') {
+      try {
+        const result = await handlePendingDelete(message, pendingAction, userId);
+        return res.json(result);
+      } catch (error) {
+        console.error('Chatbot pending action error:', error);
+        return res.status(500).json({
+          reply: 'Something went wrong while processing your confirmation. Please try again.',
+          refreshNeeded: false,
+        });
+      }
     }
   }
 
@@ -265,34 +268,30 @@ const handleMessage = async (req, res) => {
 
     // Check if Gemini returned a function call
     const candidate = response.candidates?.[0];
-    const parts = candidate?.content?.parts || [];
+    const parts = candidate?.content?.parts;
+    
+    if (!parts) {
+      return res.status(502).json({
+        reply: 'The AI model returned an unexpected response format.',
+        refreshNeeded: false,
+      });
+    }
 
     const functionCallPart = parts.find((p) => p.functionCall);
 
     if (functionCallPart) {
       const { name, args } = functionCallPart.functionCall;
-      let result;
+      console.log(`[Chatbot] Tool requested: ${name}`, args);
 
-      switch (name) {
-        case 'add_application':
-          result = await handleAddApplication(args);
-          break;
-        case 'update_status':
-          result = await handleUpdateStatus(args);
-          break;
-        case 'remove_application':
-          result = await handleRemoveApplication(args);
-          break;
-        default:
-          result = {
-            reply: `I received an unknown action: "${name}". I can add, update, or remove applications.`,
-            refreshNeeded: false,
-          };
-      }
+      // Route to our handler functions and pass userId
+      let toolResult;
+      if (name === 'add_application') toolResult = await handleAddApplication(args, userId);
+      else if (name === 'update_status') toolResult = await handleUpdateStatus(args, userId);
+      else if (name === 'remove_application') toolResult = await handleRemoveApplication(args, userId);
+      else toolResult = { reply: `I received an unknown action: "${name}".`, refreshNeeded: false };
 
-      return res.json(result);
+      return res.json(toolResult);
     }
-
     // No function call — return plain text reply
     const textPart = parts.find((p) => p.text);
     const reply = textPart?.text || "I'm not sure what to do with that. Try something like \"I applied to Google for SDE Intern\" or \"Move Amazon to Interview\".";

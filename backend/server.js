@@ -1,10 +1,12 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 
 const connectDB = require('./config/db');
 const applicationRoutes = require('./routes/applicationRoutes');
 const chatbotRoutes = require('./routes/chatbotRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // Connect to MongoDB before starting the server
 connectDB();
@@ -12,10 +14,15 @@ connectDB();
 const app = express();
 
 // Middleware
-app.use(cors());           // Allow requests from Vite dev server
+app.use(cors({
+  origin: true, // Allow frontend origin via Vite proxy or direct
+  credentials: true,
+}));
 app.use(express.json());   // Parse JSON request bodies
+app.use(cookieParser());   // Parse cookies for auth
 
-// Routes — all application endpoints live under /api/applications
+// Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/applications', applicationRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 

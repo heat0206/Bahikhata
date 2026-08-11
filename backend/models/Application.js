@@ -5,6 +5,11 @@ const mongoose = require('mongoose');
 // timestamps: true adds createdAt and updatedAt automatically.
 const applicationSchema = new mongoose.Schema(
   {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: false, // temporarily false to not break existing apps without userId
+    },
     companyName: {
       type: String,
       required: [true, 'Company name is required'],
