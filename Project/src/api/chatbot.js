@@ -12,6 +12,7 @@ export async function sendChatMessage(message, pendingAction = null) {
   const res = await fetch(CHATBOT_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(body),
   });
 
