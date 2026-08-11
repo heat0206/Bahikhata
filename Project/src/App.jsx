@@ -8,6 +8,7 @@ import ApplicationTable from './components/ApplicationTable'
 import ApplicationDetails from './components/ApplicationDetails'
 import ApplicationFormModal from './components/ApplicationFormModal'
 import OverviewPanel from './components/OverviewPanel'
+import { ClipboardText, Plus } from '@phosphor-icons/react'
 
 function App() {
   // --- Data & CRUD ---
@@ -68,7 +69,7 @@ function App() {
 
   return (
     <div className="app-shell">
-      <Header />
+      <Header totalApplications={applications.length} />
 
       <main className="app-main">
         <section className="dashboard-card">
@@ -85,13 +86,20 @@ function App() {
 
           {applications.length === 0 ? (
             <div className="empty-state">
-              <p>Start Tracking your Applications!</p>
-              <button type="button" className="btn-primary" onClick={openAddForm}>
-                Add Application
+              <div className="empty-state-icon">
+                <ClipboardText size={28} weight="light" />
+              </div>
+              <p className="empty-state-title">No applications yet</p>
+              <p className="empty-state-desc">
+                Start tracking your internship and job applications in one place.
+              </p>
+              <button type="button" className="btn-accent" onClick={openAddForm} id="first-add-btn">
+                <Plus size={16} weight="bold" />
+                Add Your First Application
               </button>
             </div>
           ) : showNoSearchMatch ? (
-            <p>No applications found matching your search criteria.</p>
+            <p className="no-results">No applications match your search or filter.</p>
           ) : (
             <div className="content-grid">
               <div className="table-section">
@@ -112,10 +120,10 @@ function App() {
 
               <OverviewPanel applications={applications} />
             </div>
-          )
-          }
+          )}
         </section>
       </main>
+
       {isFormOpen && (
         <ApplicationFormModal
           editingId={editingId}

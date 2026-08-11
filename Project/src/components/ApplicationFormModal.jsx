@@ -1,90 +1,88 @@
+import { X } from '@phosphor-icons/react'
+
+const formFields = [
+  { name: 'companyName',    label: 'Company Name',    type: 'text',   placeholder: 'e.g. Google' },
+  { name: 'role',           label: 'Role',            type: 'text',   placeholder: 'e.g. Software Engineer Intern' },
+  { name: 'location',       label: 'Location',        type: 'text',   placeholder: 'e.g. New York, NY' },
+  { name: 'appliedThrough', label: 'Applied Through',  type: 'text',   placeholder: 'e.g. LinkedIn, Company Site' },
+  { name: 'appliedOn',      label: 'Applied On',       type: 'date',   placeholder: '' },
+  { name: 'jobLink',        label: 'Job Link',         type: 'text',   placeholder: 'https://...' },
+]
+
+const statusOptions = ['Applied', 'OA', 'Interview', 'Hackathon', 'Offer', 'Rejected', 'Withdrawn']
+
 function ApplicationFormModal({ editingId, form, onChange, onSubmit, onCancel }) {
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
       <div className="modal-card">
-        <h2>{editingId ? 'Edit Application' : 'Add Application'}</h2>
+        <div className="modal-header">
+          <h2 id="modal-title">{editingId ? 'Edit Application' : 'Add Application'}</h2>
+          <button
+            type="button"
+            className="btn-ghost"
+            onClick={onCancel}
+            aria-label="Close modal"
+            style={{ width: 34, height: 34, padding: 0 }}
+          >
+            <X size={18} weight="bold" />
+          </button>
+        </div>
 
-        <form onSubmit={onSubmit}>
-          <div className="form-grid">
-            <input
-              type="text"
-              name="companyName"
-              placeholder="Company Name"
-              value={form.companyName}
-              onChange={onChange}
-            />
+        <div className="modal-body">
+          <form onSubmit={onSubmit} id="application-form">
+            <div className="form-grid">
+              {formFields.map(({ name, label, type, placeholder }) => (
+                <div className="form-field" key={name}>
+                  <label className="form-label" htmlFor={`field-${name}`}>{label}</label>
+                  <input
+                    id={`field-${name}`}
+                    type={type}
+                    name={name}
+                    placeholder={placeholder}
+                    value={form[name] ?? ''}
+                    onChange={onChange}
+                    autoComplete="off"
+                  />
+                </div>
+              ))}
 
-            <input
-              type="text"
-              name="role"
-              placeholder="Role"
-              value={form.role}
-              onChange={onChange}
-            />
+              <div className="form-field">
+                <label className="form-label" htmlFor="field-status">Status</label>
+                <select
+                  id="field-status"
+                  name="status"
+                  value={form.status ?? ''}
+                  onChange={onChange}
+                >
+                  <option value="">Select Status</option>
+                  {statusOptions.map((s) => (
+                    <option key={s} value={s}>{s}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-            <input
-              type="text"
-              name="location"
-              placeholder="Location"
-              value={form.location}
-              onChange={onChange}
-            />
+            <div className="form-field">
+              <label className="form-label" htmlFor="field-notes">Notes</label>
+              <textarea
+                id="field-notes"
+                name="notes"
+                placeholder="Interview rounds, recruiter contact, links, or any notes…"
+                value={form.notes ?? ''}
+                onChange={onChange}
+              />
+            </div>
+          </form>
+        </div>
 
-            <input
-              type="text"
-              name="appliedThrough"
-              placeholder="Applied Through"
-              value={form.appliedThrough}
-              onChange={onChange}
-            />
-
-            <input
-              type="date"
-              name="appliedOn"
-              value={form.appliedOn}
-              onChange={onChange}
-            />
-
-            <select
-              name="status"
-              value={form.status}
-              onChange={onChange}
-            >
-              <option value="">Select Status</option>
-              <option value="Applied">Applied</option>
-              <option value="OA">OA</option>
-              <option value="Interview">Interview</option>
-              <option value="Hackathon">Hackathon</option>
-              <option value="Offer">Offer</option>
-              <option value="Rejected">Rejected</option>
-              <option value="Withdrawn">Withdrawn</option>
-            </select>
-
-            <input
-              type="text"
-              name="jobLink"
-              placeholder="Job Link"
-              value={form.jobLink}
-              onChange={onChange}
-            />
-          </div>
-
-          <textarea
-            name="notes"
-            placeholder="Notes"
-            value={form.notes}
-            onChange={onChange}
-          />
-
-          <div className="modal-actions">
-            <button type="button" className="btn-ghost" onClick={onCancel}>
-              Cancel
-            </button>
-            <button type="submit" className="btn-primary">
-              {editingId ? 'Save' : 'Add'}
-            </button>
-          </div>
-        </form>
+        <div className="modal-footer">
+          <button type="button" className="btn-ghost" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="btn-primary" form="application-form">
+            {editingId ? 'Save Changes' : 'Add Application'}
+          </button>
+        </div>
       </div>
     </div>
   )

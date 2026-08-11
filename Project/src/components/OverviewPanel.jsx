@@ -1,58 +1,98 @@
+import { Briefcase } from '@phosphor-icons/react'
+
+// Monochrome-to-accent palette for the donut chart
 const statusColors = {
-  'Applied': '#000000',
-  'Offer': '#333333',
-  'Interview': '#555555',
-  'OA': '#777777',
-  'Hackathon': '#999999',
-  'Rejected': '#cccccc',
-  'Withdrawn': '#e5e5e5',
-  'Unknown': '#f5f5f5'
-};
+  'Applied':   '#2563EB',  // accent blue
+  'Interview': '#18181B',  // near-black
+  'OA':        '#3F3F46',  // dark grey
+  'Hackathon': '#71717A',  // mid grey
+  'Offer':     '#09090B',  // jet
+  'Rejected':  '#D4D4D8',  // light grey
+  'Withdrawn': '#E4E4E7',  // border grey
+  'Unknown':   '#F4F4F5',  // muted
+}
 
 function OverviewPanel({ applications }) {
-  const totalApplications = applications.length;
+  const total = applications.length
   const statusCounts = applications.reduce((acc, app) => {
-    const status = app.status || 'Unknown';
-    acc[status] = (acc[status] || 0) + 1;
-    return acc;
-  }, {});
+    const status = app.status || 'Unknown'
+    acc[status] = (acc[status] || 0) + 1
+    return acc
+  }, {})
 
-  let cumulativePercent = 0;
-  const gradientStops = Object.entries(statusCounts).map(([status, count]) => {
-    const percent = (count / totalApplications) * 100;
-    const start = cumulativePercent;
-    cumulativePercent += percent;
-    const color = statusColors[status] || statusColors['Unknown'];
-    return `${color} ${start}% ${cumulativePercent}%`;
-  }).join(', ');
+  // Ordered by presence for consistent chart slices
+  const orderedKeys = ['Applied', 'Interview', 'OA', 'Hackathon', 'Offer', 'Rejected', 'Withdrawn', 'Unknown']
+  const sorted = orderedKeys.filter((k) => statusCounts[k])
+
+  let cumulative = 0
+  const gradientStops = sorted.map((status) => {
+    const pct = (statusCounts[status] / total) * 100
+    const start = cumulative
+    cumulative += pct
+    const color = statusColors[status] ?? statusColors['Unknown']
+    return `${color} ${start.toFixed(2)}% ${cumulative.toFixed(2)}%`
+  }).join(', ')
 
   const donutStyle = {
-    background: totalApplications > 0 ? `conic-gradient(${gradientStops})` : '#f5f5f5'
-  };
+    background: total > 0 ? `conic-gradient(${gradientStops})` : 'var(--color-muted)',
+  }
 
   return (
     <div className="overview-section">
       <div className="overview-card">
-        <h3 className="overview-title">Overview</h3>
-        <div className="stat-box">
-          <span className="stat-value">{totalApplications}</span>
-          <span className="stat-label">Total Applications</span>
+        <div className="overview-card-header">
+          <h3 className="overview-title">Overview</h3>
         </div>
 
-        <div className="donut-wrapper">
-          <div className="donut-chart" style={donutStyle}></div>
-        </div>
-
-        <div className="chart-legend">
-          {Object.entries(statusCounts).map(([status, count]) => (
-            <div key={status} className="legend-item">
-              <span className="legend-color" style={{ backgroundColor: statusColors[status] || statusColors['Unknown'] }}></span>
-              <div className="legend-text">
-                <span className="legend-label">{status}</span>
-                <span className="legend-count">{count}</span>
-              </div>
+        <div className="overview-card-body">
+          {/* Total Stat */}
+          <div className="stat-box">
+            <div className="stat-icon">
+              <Briefcase size={20} weight="fill" />
             </div>
-          ))}
+            <div className="stat-text">
+              <span className="stat-value">{total}</span>
+              <span className="stat-label">Total Applications</span>
+            </div>
+          </div>
+
+          {/* Donut Chart */}
+          {total > 0 && (
+            <div className="donut-wrapper">
+              <div className="donut-chart" style={donutStyle} aria-hidden="true" />
+            </div>
+          )}
+
+          {/* Legend */}
+          <div className="chart-legend">
+            {sorted.map((status) => {
+              const count = statusCounts[status]
+              const pct = Math.round((count / total) * 100)
+              return (
+                <div key={status} className="legend-item">
+                  <span
+                    className="legend-swatch"
+                    style={{ backgroundColor: statusColors[status] ?? statusColors['Unknown'] }}
+                  />
+                  <div style={{ flex: 1 }}>
+                    <div className="legend-text">
+                      <span className="legend-label">{status}</span>
+                      <span className="legend-count">{count}</span>
+                    </div>
+                    <div className="legend-bar-track">
+                      <div
+                        className="legend-bar-fill"
+                        style={{
+                          width: `${pct}%`,
+                          backgroundColor: statusColors[status] ?? statusColors['Unknown'],
+                        }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
