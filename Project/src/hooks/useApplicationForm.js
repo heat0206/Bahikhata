@@ -7,6 +7,8 @@ const EMPTY_FORM = {
   appliedThrough: '',
   appliedOn: '',
   status: '',
+  oaDate: '',
+  oaTime: '',
   jobLink: '',
   notes: '',
 }

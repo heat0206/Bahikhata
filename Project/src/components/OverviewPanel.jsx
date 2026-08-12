@@ -4,7 +4,8 @@ import { Briefcase } from '@phosphor-icons/react'
 const statusColors = {
   'Applied':   '#3b82f6',  // bright blue
   'Interview': '#22c55e',  // bright green
-  'OA':        '#f97316',  // bright orange
+  'OA - Upcoming':   '#f97316',  // bright orange
+  'OA - Completed':  '#0d9488',  // teal
   'Hackathon': '#a855f7',  // bright purple
   'Offer':     '#f59e0b',  // bright amber
   'Rejected':  '#ef4444',  // bright red
@@ -21,7 +22,7 @@ function OverviewPanel({ applications }) {
   }, {})
 
   // Ordered by presence for consistent chart slices
-  const orderedKeys = ['Applied', 'Interview', 'OA', 'Hackathon', 'Offer', 'Rejected', 'Withdrawn', 'Unknown']
+  const orderedKeys = ['Applied', 'Interview', 'OA - Upcoming', 'OA - Completed', 'Hackathon', 'Offer', 'Rejected', 'Withdrawn', 'Unknown']
   const sorted = orderedKeys.filter((k) => statusCounts[k])
 
   let cumulative = 0

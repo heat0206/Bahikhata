@@ -34,3 +34,7 @@ lerna-debug.log*
 *.njsproj*
 *.sln
 *.sw?
+
+
+#Understanding Purpose
+oa_automation_explanation.md

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { ArrowLeft } from '@phosphor-icons/react';
 import '../App.css';
 
 const LoginPage = () => {
@@ -32,7 +33,15 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="app-shell auth-container">
+    <div className="app-shell auth-container" style={{ position: 'relative' }}>
+      <Link 
+        to="/" 
+        className="btn-back"
+        style={{ position: 'absolute', top: '24px', left: '24px' }}
+      >
+        <ArrowLeft size={16} weight="bold" />
+        Back to Home
+      </Link>
       <div className="auth-card">
         <div className="auth-header">
           <div className="header-logo-mark" style={{ margin: '0 auto' }}>PB</div>

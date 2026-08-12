@@ -4,5 +4,9 @@
  */
 export function getStatusClassName(status) {
   if (!status) return 'status-default';
-  return `status-${status.toLowerCase()}`;
+  const safeStatus = status.toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w-]/g, '')
+    .replace(/-+/g, '-');
+  return `status-${safeStatus}`;
 }

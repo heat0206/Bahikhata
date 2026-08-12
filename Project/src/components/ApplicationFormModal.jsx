@@ -9,7 +9,7 @@ const formFields = [
   { name: 'jobLink',        label: 'Job Link',         type: 'text',   placeholder: 'https://...' },
 ]
 
-const statusOptions = ['Applied', 'OA', 'Interview', 'Hackathon', 'Offer', 'Rejected', 'Withdrawn']
+const statusOptions = ['Applied', 'OA - Upcoming', 'OA - Completed', 'Interview', 'Hackathon', 'Offer', 'Rejected', 'Withdrawn']
 
 function ApplicationFormModal({ editingId, form, onChange, onSubmit, onCancel }) {
   return (
@@ -61,6 +61,31 @@ function ApplicationFormModal({ editingId, form, onChange, onSubmit, onCancel })
                 </select>
               </div>
             </div>
+
+            {form.status === 'OA - Upcoming' && (
+              <div className="form-grid" style={{ marginTop: 'var(--space-4)' }}>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="field-oaDate">OA Date</label>
+                  <input
+                    id="field-oaDate"
+                    type="date"
+                    name="oaDate"
+                    value={form.oaDate ?? ''}
+                    onChange={onChange}
+                  />
+                </div>
+                <div className="form-field">
+                  <label className="form-label" htmlFor="field-oaTime">OA Time (HH:mm)</label>
+                  <input
+                    id="field-oaTime"
+                    type="time"
+                    name="oaTime"
+                    value={form.oaTime ?? ''}
+                    onChange={onChange}
+                  />
+                </div>
+              </div>
+            )}
 
             <div className="form-field">
               <label className="form-label" htmlFor="field-notes">Notes</label>

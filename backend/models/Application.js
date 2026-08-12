@@ -40,6 +40,16 @@ const applicationSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    oaDate: {
+      type: String,
+      trim: true,
+      default: '',
+    },
+    oaTime: {
+      type: String,
+      trim: true,
+      default: '',
+    },
     jobLink: {
       type: String,
       trim: true,

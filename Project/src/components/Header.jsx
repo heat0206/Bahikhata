@@ -17,7 +17,7 @@ function Header({ totalApplications }) {
         <div className="header-logo-mark">PB</div>
         <div className="header-text-group">
           <p className="app-eyebrow">PrepBoard</p>
-          <h1 className="app-title">Dashboard</h1>
+          <h1 className="app-title iosevka-charon-mono-bold">Dashboard</h1>
         </div>
       </div>
 

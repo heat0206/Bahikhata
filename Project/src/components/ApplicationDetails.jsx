@@ -59,6 +59,20 @@ function ApplicationDetails({ application, onClose, onEdit }) {
             </div>
           ))}
 
+          {application.oaDate && (
+            <div className="metadata-group">
+              <span className="metadata-label">OA Date</span>
+              <span className="metadata-value">{application.oaDate}</span>
+            </div>
+          )}
+
+          {application.oaTime && (
+            <div className="metadata-group">
+              <span className="metadata-label">OA Time</span>
+              <span className="metadata-value">{application.oaTime}</span>
+            </div>
+          )}
+
           {application.notes && (
             <div className="metadata-group notes-group">
               <span className="metadata-label">Notes</span>

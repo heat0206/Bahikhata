@@ -572,10 +572,16 @@ tbody tr:last-child td {
   border: 2px solid #22c55e;
 }
 
-.status-oa {
+.status-oa-upcoming {
   background: #FFEDD5;
   color: #9a3412;
   border: 2px solid #f97316;
+}
+
+.status-oa-completed {
+  background: #F0FDFA;
+  color: #0f766e;
+  border: 2px solid #0d9488;
 }
 
 .status-hackathon {
@@ -1501,6 +1507,35 @@ tbody tr:last-child td {
 
 .btn-green:active {
   transform: translateY(0);
+}
+
+/* ── Back Button ──────────────────────────────────── */
+.btn-back {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  height: 38px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--color-foreground);
+  background: var(--color-surface);
+  border: 1px solid var(--color-primary); /* Consistent black border */
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--ease-out);
+  text-decoration: none;
+}
+
+.btn-back:hover {
+  background: var(--color-muted);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-back:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 /* ── Logout Button ────────────────────────────────── */

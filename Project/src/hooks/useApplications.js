@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import {
   fetchApplications as apiFetch,
   createApplication as apiCreate,
@@ -24,6 +24,46 @@ export function useApplications() {
     refreshApplications()
       .catch((error) => console.error('Failed to load applications:', error.message))
   }, [refreshApplications])
+
+  const checkDeadlines = useCallback(async (apps) => {
+    if (!apps || apps.length === 0) return;
+    let needsRefresh = false;
+    const now = new Date();
+    for (const app of apps) {
+      if (app.status === 'OA - Upcoming' && app.oaDate && app.oaTime) {
+        const oaDateTime = new Date(`${app.oaDate}T${app.oaTime}`);
+        if (oaDateTime < now) {
+          try {
+            await apiUpdate(app._id, { ...app, status: 'OA - Completed' });
+            needsRefresh = true;
+          } catch (error) {
+            console.error('Failed to auto-update OA status:', error.message);
+          }
+        }
+      }
+    }
+    if (needsRefresh) {
+      refreshApplications();
+    }
+  }, [refreshApplications]);
+
+  // Keep a fresh reference to applications for the interval
+  const appsRef = useRef(applications);
+  useEffect(() => {
+    appsRef.current = applications;
+    
+    // Also run an immediate check whenever applications change
+    checkDeadlines(applications);
+  }, [applications, checkDeadlines]);
+
+  // Setup a single interval that checks every 10 seconds
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      checkDeadlines(appsRef.current);
+    }, 10000); // 10 seconds for faster updates
+
+    return () => clearInterval(intervalId);
+  }, [checkDeadlines]);
 
   const addApplication = useCallback(async (formData) => {
     await apiCreate(formData)

@@ -28,7 +28,8 @@ function Toolbar({ search, setSearch, filter, setFilter, onAddApplication }) {
         >
           <option value="">All Statuses</option>
           <option value="Applied">Applied</option>
-          <option value="OA">OA</option>
+          <option value="OA - Upcoming">OA - Upcoming</option>
+          <option value="OA - Completed">OA - Completed</option>
           <option value="Interview">Interview</option>
           <option value="Hackathon">Hackathon</option>
           <option value="Offer">Offer</option>
