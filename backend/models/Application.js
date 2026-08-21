@@ -60,6 +60,10 @@ const applicationSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
+    oaReminderSent: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields

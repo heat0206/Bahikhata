@@ -1,0 +1,10 @@
+===============================
+AUTHENTICATION LOGIC
+===============================
+1) bycript - to turn pw into a one way fingerprint.
+	same input -> same output everytime
+	but reverse is not possible.
+	
+	This fingerprint is what is stored in the database.
+
+When the user logs in it will again apply the math on the entered password and try to match the fingerprint obtained with the one stored in the database. if matches successful otherwise failure.

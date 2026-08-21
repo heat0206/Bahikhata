@@ -6,6 +6,7 @@ const {
   createApplication,
   updateApplication,
   deleteApplication,
+  triggerRemindersManually,
 } = require('../controllers/applicationController');
 
 const { protect } = require('../middleware/authMiddleware');
@@ -14,6 +15,7 @@ const { protect } = require('../middleware/authMiddleware');
 // Express calls the matching function when a request hits the route.
 router.get('/', protect, getApplications);
 router.post('/', protect, createApplication);
+router.post('/trigger-reminders', protect, triggerRemindersManually);
 router.put('/:id', protect, updateApplication);
 router.delete('/:id', protect, deleteApplication);
 

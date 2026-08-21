@@ -2,7 +2,7 @@ const { GoogleGenAI } = require('@google/genai');
 const Application = require('../models/Application');
 
 // ── Status Enum ─────────────────────────────────────
-const VALID_STATUSES = ['Applied', 'Hackathon', 'Interview', 'OA', 'Offer', 'Rejected', 'Withdrawn'];
+const VALID_STATUSES = ['Applied', 'Hackathon', 'Interview', 'OA', 'OA - Upcoming', 'OA - Completed', 'Offer', 'Rejected', 'Withdrawn'];
 
 function isValidStatus(status) {
   return VALID_STATUSES.includes(status);
@@ -33,7 +33,7 @@ const tools = [
             },
             status: {
               type: 'string',
-              description: 'Application status. Must be one of: Applied, Hackathon, Interview, OA, Offer, Rejected, Withdrawn. Defaults to "Applied" if not mentioned.',
+              description: 'Application status. Must be one of: Applied, Hackathon, Interview, OA, OA - Upcoming, Offer, Rejected, Withdrawn. Defaults to "Applied" if not mentioned.',
               enum: VALID_STATUSES,
             },
             appliedOn: {
@@ -56,7 +56,7 @@ const tools = [
             },
             newStatus: {
               type: 'string',
-              description: 'The new status. Must be one of: Applied, Hackathon, Interview, OA, Offer, Rejected, Withdrawn.',
+              description: 'The new status. Must be one of: Applied, Hackathon, Interview, OA, OA - Upcoming, OA - Completed, Offer, Rejected, Withdrawn.',
               enum: VALID_STATUSES,
             },
           },
@@ -100,6 +100,7 @@ async function handleAddApplication(args, userId) {
     role: args.role || '',
     status,
     appliedOn: args.appliedOn || today,
+    oaReminderSent: false,
   });
 
   return {
@@ -143,7 +144,14 @@ async function handleUpdateStatus(args, userId) {
   }
 
   const doc = matches[0];
+  const previousStatus = doc.status;
   doc.status = newStatus;
+
+  // If transitioning into an OA status, reset reminder state so it is eligible for future reminders
+  if ((newStatus === 'OA - Upcoming' || newStatus === 'OA') && previousStatus !== newStatus) {
+    doc.oaReminderSent = false;
+  }
+
   await doc.save();
 
   return {
