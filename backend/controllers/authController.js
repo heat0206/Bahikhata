@@ -10,12 +10,15 @@ const sendTokenResponse = (user, statusCode, res) => {
     expiresIn: '7d',
   });
 
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // Cookie options
+  // In production (cross-domain), sameSite MUST be 'none' and secure MUST be true
   const options = {
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
   };
 
   res
@@ -115,12 +118,14 @@ const login = async (req, res) => {
 // @route   POST /api/auth/logout
 // @access  Public
 const logout = async (req, res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   // Clear cookie with EXACT same options used to set it
   res.cookie('token', 'none', {
     expires: new Date(Date.now() + 10 * 1000), // expire in 10 secs
     httpOnly: true,
-    sameSite: 'strict',
-    secure: process.env.NODE_ENV === 'production',
+    sameSite: isProduction ? 'none' : 'lax',
+    secure: isProduction,
   });
 
   res.status(200).json({
