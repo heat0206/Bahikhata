@@ -1,8 +1,8 @@
 // --- API Helper Functions ---
 // Each function talks to the Express backend via the Vite proxy.
 // All endpoints return { success: true, data: ... } or { success: false, message: "..." }
-
-const API_URL = '/api/applications';
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = `${BASE_URL}/api/applications`;
 
 export async function fetchApplications() {
   const res = await fetch(API_URL, {

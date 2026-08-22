@@ -1,7 +1,8 @@
 // --- Chatbot API Helper ---
 // Sends a chat message to the Express backend chatbot endpoint.
 
-const CHATBOT_URL = '/api/chatbot';
+const BASE_URL = import.meta.env.VITE_API_URL || '';
+const CHATBOT_URL = `${BASE_URL}/api/chatbot`;
 
 export async function sendChatMessage(message, pendingAction = null) {
   const body = { message };
